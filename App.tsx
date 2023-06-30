@@ -1,5 +1,4 @@
 import React, {useRef, useState} from 'react';
-import {useNavigation} from '@react-navigation/native';
 import {
   Image,
   SafeAreaView,
