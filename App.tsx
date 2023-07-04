@@ -6,9 +6,8 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
-import {createPdf} from 'react-native-images-to-pdf';
 import ImagePicker from 'react-native-image-crop-picker';
-import {isImageBlurred} from 'image-processing-sdk';
+import {isImageBlurred, createImagesToPdf} from 'image-processing-sdk';
 
 function App(): JSX.Element {
   const [imageUrl, setImageUrl] = useState<any>(null);
@@ -22,11 +21,9 @@ function App(): JSX.Element {
       imageUrls.current = images?.map(item => item.path);
       console.log('imageUrls.current', imageUrls.current);
       const options = {
-        pages: imageUrls.current || [],
-        outputDirectory: 'data/user/0/',
-        outputFilename: 'output.pdf',
+        images: imageUrls.current || [],
       };
-      createPdf(options)
+      createImagesToPdf(options)
         .then((path: any) => console.log(`PDF created successfully: ${path}`))
         .catch((error: any) => console.log(`Failed to create PDF: ${error}`));
     });
