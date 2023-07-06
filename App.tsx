@@ -2,16 +2,18 @@ import React, {useRef, useState} from 'react';
 import {
   Image,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  View,
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import {isImageBlurred, createImagesToPdf} from 'image-processing-sdk';
 
 function App(): JSX.Element {
-  const [imageUrl, setImageUrl] = useState<any>(null);
-  const [isBlur, setIsBlur] = useState<any>(null);
+  const [imageUrlArray, setImageUrls] = useState<string[]>([]);
+  const [isBlur, setIsBlur] = useState<boolean[]>([]);
   const imageUrls = useRef<any>(null);
 
   const generatePdf = () => {
@@ -19,7 +21,6 @@ function App(): JSX.Element {
       multiple: true,
     }).then(async images => {
       imageUrls.current = images?.map(item => item.path);
-      console.log('imageUrls.current', imageUrls.current);
       const options = {
         images: imageUrls.current || [],
       };
@@ -31,18 +32,19 @@ function App(): JSX.Element {
 
   const openImagePicker = async () => {
     ImagePicker.openPicker({
-      multiple: false,
-    }).then(async image => {
-      console.log('image', image.path);
-      setImageUrl(image?.path);
-      console.log('url from picker', image?.path);
-      await imageBlurCheck(image?.path);
+      multiple: true,
+    }).then(async images => {
+      const tempUrls = images?.map(item => item.path);
+      setImageUrls(tempUrls);
+      setIsBlur([]);
+      tempUrls?.forEach((item: string) => {
+        imageBlurCheck(item);
+      });
     });
   };
   const imageBlurCheck = (imagePath: string) => {
-    console.log('url inside sdk', imagePath);
-    isImageBlurred('').then((result: boolean)=>{
-      setIsBlur(result);
+    isImageBlurred(imagePath).then((result: boolean)=>{
+      setIsBlur((isBlur)=>[...isBlur, result]);
       console.log('result', result);
     }).catch((error: any)=> {
       console.log('error', error);
@@ -53,10 +55,23 @@ function App(): JSX.Element {
       <TouchableOpacity style={styles.button} onPress={openImagePicker}>
         <Text style={styles.buttonText}>imageBlurCheck</Text>
       </TouchableOpacity>
-      {imageUrl && <Image style={styles.imageStyle} source={{uri: imageUrl}} />}
-      {imageUrl && (
-        <Text style={styles.primaryText}>{`Result Blur: ${isBlur}`}</Text>
-      )}
+      <ScrollView style={styles.scrollView} horizontal >
+        <View style={styles.details}>
+          <Text style={styles.primaryText}>Total images</Text>
+          <Text style={styles.resultText}>{imageUrlArray?.length}</Text>
+          <Text style={styles.primaryText}>Blur images</Text>
+          <Text style={styles.resultText}>{isBlur?.filter(item => item)?.length}</Text>
+        </View>
+        {imageUrlArray?.map((item: string, index) => {
+          return(
+            <View key={item} style={styles.imageContainer}>
+              <Image style={styles.imageStyle} source={{uri: item}} />     
+              <Text style={styles.primaryText}>{`Result Blur: ${isBlur[index]}`}</Text>
+            </View>
+            )
+          })
+        }
+       </ScrollView>
       <TouchableOpacity style={styles.button} onPress={generatePdf}>
         <Text style={styles.buttonText}>create pdf</Text>
       </TouchableOpacity>
@@ -66,7 +81,6 @@ function App(): JSX.Element {
 
 const styles = StyleSheet.create({
   backgroundStyle: {
-    flex: 1,
     backgroundColor: '#FFF',
   },
   button: {
@@ -90,6 +104,22 @@ const styles = StyleSheet.create({
     color: 'blue',
     fontSize: 18,
   },
+  scrollView: {
+    paddingVertical: 10,
+  },
+  imageContainer: {
+    margin: 10,
+  },
+  details: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+  },
+  resultText: {
+    color: 'red',
+    fontSize: 20,
+    paddingBottom: 6,
+  }
 });
 
 export default App;
