@@ -39,11 +39,14 @@ function App(): JSX.Element {
       await imageBlurCheck(image?.path);
     });
   };
-  const imageBlurCheck = async (imagePath: string) => {
+  const imageBlurCheck = (imagePath: string) => {
     console.log('url inside sdk', imagePath);
-    const result = await isImageBlurred(imagePath || 'sample url');
-    setIsBlur(result);
-    console.log('result', result, imageUrl);
+    isImageBlurred('').then((result: boolean)=>{
+      setIsBlur(result);
+      console.log('result', result);
+    }).catch((error: any)=> {
+      console.log('error', error);
+    })
   };
   return (
     <SafeAreaView style={styles.backgroundStyle}>
