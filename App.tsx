@@ -40,8 +40,8 @@ function App(): JSX.Element {
     });
   };
   const imageBlurCheck = async (imagePath: string) => {
-    console.log('url inside sdk', imagePath?.slice(8));
-    const result = await isImageBlurred(imagePath?.slice(8) || 'sample url');
+    console.log('url inside sdk', imagePath);
+    const result = await isImageBlurred(imagePath || 'sample url');
     setIsBlur(result);
     console.log('result', result, imageUrl);
   };
