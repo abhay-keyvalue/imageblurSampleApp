@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useState} from 'react';
 import {
   Image,
   SafeAreaView,
@@ -12,66 +12,70 @@ import ImagePicker from 'react-native-image-crop-picker';
 import {isImageBlurred, createImagesToPdf} from 'image-processing-sdk';
 
 function App(): JSX.Element {
-  const [imageUrlArray, setImageUrls] = useState<string[]>([]);
-  const [isBlur, setIsBlur] = useState<boolean[]>([]);
-  const imageUrls = useRef<any>(null);
-
-  const generatePdf = () => {
-    ImagePicker.openPicker({
-      multiple: true,
-    }).then(async images => {
-      imageUrls.current = images?.map(item => item.path);
-      const options = {
-        images: imageUrls.current || [],
-      };
-      createImagesToPdf(options)
-        .then((path: any) => console.log(`PDF created successfully: ${path}`))
-        .catch((error: any) => console.log(`Failed to create PDF: ${error}`));
-    });
-  };
+  const [imageSet, setImageSet] = useState<any>({});
 
   const openImagePicker = async () => {
     ImagePicker.openPicker({
       multiple: true,
     }).then(async images => {
-      const tempUrls = images?.map(item => item.path);
-      setImageUrls(tempUrls);
-      setIsBlur([]);
-      tempUrls?.forEach((item: string) => {
-        imageBlurCheck(item);
-      });
+      const tempUrls: any[] = [];
+      const tempImageSets: any = {};
+      images?.forEach((item)=> {
+        tempUrls.push(item.path);
+        tempImageSets[item.path] = null;
+      })
+      setImageSet(tempImageSets);
     });
   };
+
+  const checkImageBlur = () => {
+    Object.keys(imageSet)?.forEach((item: string) => {
+      imageBlurCheck(item);
+    });
+  }
+
   const imageBlurCheck = (imagePath: string) => {
     isImageBlurred(imagePath).then((result: boolean)=>{
-      setIsBlur((isBlur)=>[...isBlur, result]);
+      setImageSet((imageSet: any)=> {const tempImageSets: any = {...imageSet}; tempImageSets[imagePath] = result; return tempImageSets});
       console.log('result', result);
     }).catch((error: any)=> {
       console.log('error', error);
     })
   };
+
+  const generatePdf = () => {
+    const options = {
+      images: Object.keys(imageSet) || [],
+    };
+    createImagesToPdf(options)
+    .then((path: any) => console.log(`PDF created successfully: ${path}`))
+    .catch((error: any) => console.log(`Failed to create PDF: ${error}`));
+  };
+
   return (
     <SafeAreaView style={styles.backgroundStyle}>
       <TouchableOpacity style={styles.button} onPress={openImagePicker}>
-        <Text style={styles.buttonText}>imageBlurCheck</Text>
+        <Text style={styles.buttonText}>Open Gallery</Text>
       </TouchableOpacity>
       <ScrollView style={styles.scrollView} horizontal >
-        <View style={styles.details}>
-          <Text style={styles.primaryText}>Total images</Text>
-          <Text style={styles.resultText}>{imageUrlArray?.length}</Text>
-          <Text style={styles.primaryText}>Blur images</Text>
-          <Text style={styles.resultText}>{isBlur?.filter(item => item)?.length}</Text>
-        </View>
-        {imageUrlArray?.map((item: string, index) => {
-          return(
-            <View key={item} style={styles.imageContainer}>
-              <Image style={styles.imageStyle} source={{uri: item}} />     
-              <Text style={styles.primaryText}>{`Result Blur: ${isBlur[index]}`}</Text>
-            </View>
-            )
+        {
+          Object.keys(imageSet)?.map((item: string)=> {
+            return(
+              <View key={item} style={styles.imageContainer}>
+                <Image style={styles.imageStyle} source={{uri: item}} />     
+                {imageSet[item] !== null && <Text style={styles.primaryText}>{`Result Blur: ${imageSet[item]}`}</Text>}
+              </View>
+              )
           })
         }
        </ScrollView>
+       {Object.keys(imageSet)?.length>0 && <View style={styles.details}>
+          <Text style={styles.primaryText}>Total images:<Text style={styles.resultText}>{Object.keys(imageSet)?.length}</Text></Text>
+          <Text style={styles.primaryText}>Blur images:<Text style={styles.resultText}>{Object.values(imageSet)?.filter(item => item)?.length}</Text></Text>
+        </View>}
+       <TouchableOpacity style={styles.button} onPress={checkImageBlur}>
+        <Text style={styles.buttonText}>Check image Blur</Text>
+      </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={generatePdf}>
         <Text style={styles.buttonText}>create pdf</Text>
       </TouchableOpacity>
@@ -111,14 +115,15 @@ const styles = StyleSheet.create({
     margin: 10,
   },
   details: {
-    justifyContent: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     padding: 10,
   },
   resultText: {
     color: 'red',
-    fontSize: 20,
-    paddingBottom: 6,
+    fontSize: 18,
+    paddingHorizontal: 6,
   }
 });
 
