@@ -12,7 +12,8 @@
   "dependencies": {
     "react": "18.2.0",
     "react-native": "0.72.1",
-    "image-processing-sdk": "image-processing-sdk24.tgz",
+    "@react-native-community/slider": "^4.4.2",
+    "image-processing-sdk": "image-processing-sdk26.tgz",
     "react-native-image-crop-picker": "^0.40.0"
   },
   "devDependencies": {

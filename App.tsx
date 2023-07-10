@@ -10,10 +10,12 @@ import {
   ToastAndroid
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
+import Slider from '@react-native-community/slider';
 import {isImageBlurred, createImagesToPdf} from 'image-processing-sdk';
 
 function App(): JSX.Element {
   const [imageSet, setImageSet] = useState<any>({});
+  const [threshold, setThreshold] = useState<number>(100);
 
   const openImagePicker = () => {
     ImagePicker.openPicker({
@@ -36,7 +38,7 @@ function App(): JSX.Element {
   }
 
   const imageBlurCheck = (imagePath: string) => {
-    isImageBlurred(imagePath).then((result: boolean)=>{
+    isImageBlurred(imagePath, threshold).then((result: boolean)=>{
       setImageSet((imageSet: any)=> {const tempImageSets: any = {...imageSet}; tempImageSets[imagePath] = result; return tempImageSets});
       console.log('result', result);
     }).catch((error: any)=> {
@@ -70,21 +72,38 @@ function App(): JSX.Element {
     });
   }
 
+ const urlArray = Object.keys(imageSet);
+ const imageResultArray = Object.values(imageSet);
   return (
     <SafeAreaView style={styles.backgroundStyle}>
+      <View style={styles.sliderContainer}>
+        <Text style={styles.primaryText}>1. Select Threshold</Text>
+        <View style={styles.row}> 
+          <Slider
+            onValueChange={(value: number) => setThreshold(value)}
+            style={{width: 200, height: 40}}
+            minimumValue={100}
+            maximumValue={300}
+            minimumTrackTintColor="#000000"
+            maximumTrackTintColor="#000000"
+          />
+          <Text style={styles.thresholdText}>{threshold}</Text>
+        </View>
+       </View>
+      <Text style={styles.primaryText}>2. Pick images</Text>
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.iconContainer} onPress={openImagePicker}>
-          <Image style={{width: 40, height: 40}} source={{uri: 'https://cdn.icon-icons.com/icons2/2348/PNG/512/gallery_icon_143014.png'}} />
+          <Image style={{width: 20, height: 20}} source={{uri: 'https://cdn.icon-icons.com/icons2/2348/PNG/512/gallery_icon_143014.png'}} />
           <Text style={styles.iconText}>Open Gallery</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconContainer} onPress={openCamera}>
-          <Image style={{width: 40, height: 40}} source={{uri: 'https://cdn-icons-png.flaticon.com/512/3178/3178179.png'}} />
+          <Image style={{width: 20, height: 20}} source={{uri: 'https://cdn-icons-png.flaticon.com/512/3178/3178179.png'}} />
           <Text style={styles.iconText}>Open Camera</Text>
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollView} horizontal >
         {
-          Object.keys(imageSet)?.map((item: string)=> {
+          urlArray?.map((item: string)=> {
             return(
               <View key={item} style={styles.imageContainer}>
                 <Image style={styles.imageStyle} source={{uri: item}} />     
@@ -94,11 +113,11 @@ function App(): JSX.Element {
           })
         }
        </ScrollView>
-       {Object.keys(imageSet)?.length>0 && <View style={styles.details}>
+       {urlArray?.length>0 && imageResultArray?.findIndex(item => item === null) === -1 && <View style={styles.details}>
           <Text style={styles.primaryText}>Total images:<Text style={styles.resultText}>{Object.keys(imageSet)?.length}</Text></Text>
           <Text style={styles.primaryText}>Blur images:<Text style={styles.resultText}>{Object.values(imageSet)?.filter(item => item)?.length}</Text></Text>
         </View>}
-      { Object.keys(imageSet)?.length>0 && (
+      {urlArray?.length>0 && (
       <>
         <TouchableOpacity style={styles.button} onPress={checkImageBlur}>
           <Text style={styles.buttonText}>Check image Blur</Text>
@@ -176,7 +195,7 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     backgroundColor: '#4681f4',
-    padding: 20,
+    padding: 10,
     borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center'
@@ -187,6 +206,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     paddingTop: 5,
+  },
+  sliderContainer: {
+    paddingTop: 5,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'center'
+  },
+  thresholdText: {
+    color: '#000',
+    fontSize: 18,
+    width: 100,
   }
 });
 
